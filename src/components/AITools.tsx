@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Robot, FileText, Image, Upload, SpinnerGap, Warning } from '@phosphor-icons/react';
 import { Separator } from '@/components/ui/separator';
-import { generateDocumentSummary } from '@/lib/azure-openai';
+import { generateDocumentSummary, summarizeWithAzureOpenAI } from '@/lib/azure-openai';
 import { azureConfig, updateAzureConfig, isConfigValid } from '@/lib/azure-config';
 
 // Define an interface for summary history items
