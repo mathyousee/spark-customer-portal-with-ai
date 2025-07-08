@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { mockAccountSummary, mockInvoices, mockSupportTickets, formatCurrency, formatDate } from "@/lib/mock-data";
-import { CalendarBlank, CurrencyDollar, FileText, ArrowRight } from "@phosphor-icons/react";
+import { CalendarBlank, CurrencyDollar, FileText, ArrowRight, Robot } from "@phosphor-icons/react";
 
 export function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }) {
   const recentInvoices = mockInvoices.slice(0, 3);
@@ -112,6 +112,47 @@ export function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }
                 </div>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Tools Card */}
+      <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Robot className="text-primary" size={20} />
+            New AI Document Summarization
+          </CardTitle>
+          <CardDescription>
+            Upload documents or images and get instant AI-powered summaries
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-2 max-w-lg">
+              <p className="text-sm">
+                Our new AI tool helps you extract key insights from documents and images without reading through everything.
+                Perfect for quickly understanding contracts, reports, and more.
+              </p>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
+                  Supports PDF, Word, text files and images
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
+                  Powered by Azure OpenAI for accurate summaries
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
+                  Save time reviewing complex documents
+                </li>
+              </ul>
+            </div>
+            <Button onClick={() => onNavigate('ai-tools')} className="whitespace-nowrap">
+              Try it now
+              <ArrowRight size={16} className="ml-2" />
+            </Button>
           </div>
         </CardContent>
       </Card>

@@ -7,7 +7,8 @@ import {
   HeadphonesSimple,
   Gear,
   SignOut,
-  User
+  User,
+  Robot
 } from '@phosphor-icons/react';
 
 interface NavItemProps {
@@ -63,6 +64,12 @@ export function Navbar({ activePage, onNavigate }: NavbarProps) {
           label="Support" 
           isActive={activePage === 'support'} 
           onClick={() => onNavigate('support')} 
+        />
+        <NavItem 
+          icon={<Robot size={20} />} 
+          label="AI Tools" 
+          isActive={activePage === 'ai-tools'} 
+          onClick={() => onNavigate('ai-tools')} 
         />
         <NavItem 
           icon={<Gear size={20} />} 

@@ -6,6 +6,7 @@ import { Dashboard } from './components/Dashboard';
 import { Invoices } from './components/Invoices';
 import { Support } from './components/Support';
 import { Settings } from './components/Settings';
+import { AITools } from './components/AITools';
 import { Sheet, SheetContent } from './components/ui/sheet';
 import { List, X } from '@phosphor-icons/react';
 import { Button } from './components/ui/button';
@@ -28,6 +29,8 @@ function App() {
         return <Invoices />;
       case 'support':
         return <Support />;
+      case 'ai-tools':
+        return <AITools />;
       case 'settings':
         return <Settings />;
       default:

@@ -39,6 +39,11 @@
    - Why: Empowers users to maintain their information and communication preferences
    - Success: Up-to-date customer information and appropriate communication settings
 
+5. **AI Document Summarization**
+   - What: Tool to upload documents or images and receive AI-powered summaries using Azure OpenAI
+   - Why: Enables customers to quickly extract key information from complex documents
+   - Success: Accurate summaries that save time and improve document comprehension
+
 ## Design Direction
 
 ### Visual Tone & Identity
