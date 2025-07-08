@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Robot, FileText, Image, Upload, SpinnerGap, Warning } from '@phosphor-icons/react';
 import { Separator } from '@/components/ui/separator';
 import { generateDocumentSummary } from '@/lib/azure-openai';
-import { azureConfig } from '@/lib/azure-config';
+import { azureConfig, updateAzureConfig } from '@/lib/azure-config';
 
 // Define an interface for summary history items
 interface SummaryItem {
@@ -90,7 +90,13 @@ export function AITools() {
 
   // Handle configuration update
   const handleConfigUpdate = () => {
-    // In a real application, this would update environment variables or a secure config store
+    // Update the configuration through our config utility
+    updateAzureConfig({
+      endpoint: configValues.endpoint,
+      apiKey: configValues.apiKey,
+      deploymentName: configValues.deploymentName
+    });
+    
     toast.success('Configuration updated');
     setShowConfig(false);
     setIsConfigured(true);
@@ -98,7 +104,7 @@ export function AITools() {
 
   // Check if Azure OpenAI is configured
   useEffect(() => {
-    // In a real app, you would validate the configuration more thoroughly
+    // Validate if the configuration has been set through the UI
     const hasValidConfig = azureConfig.apiKey && 
                           azureConfig.apiKey !== "" && 
                           !azureConfig.endpoint.includes("your-endpoint");
