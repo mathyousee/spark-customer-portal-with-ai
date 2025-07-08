@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Robot, FileText, Image, Upload, SpinnerGap, Warning } from '@phosphor-icons/react';
 import { Separator } from '@/components/ui/separator';
 import { generateDocumentSummary } from '@/lib/azure-openai';
-import { azureConfig, updateAzureConfig } from '@/lib/azure-config';
+import { azureConfig, updateAzureConfig, isConfigValid } from '@/lib/azure-config';
 
 // Define an interface for summary history items
 interface SummaryItem {
@@ -56,23 +56,26 @@ export function AITools() {
       return;
     }
     
+    if (!isConfigured) {
+      toast.error('Azure OpenAI is not properly configured');
+      setShowConfig(true);
+      return;
+    }
+    
     setIsProcessing(true);
     
     try {
-      // In a real implementation, this would call Azure OpenAI directly
-      // Here we use a timeout to simulate the API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Call the Azure OpenAI service with the text content
+      const result = await summarizeWithAzureOpenAI(textToSummarize);
       
-      const summary = `This text discusses the strategic business initiatives for the upcoming quarter. Key points include expansion plans into new markets, budget allocations for different departments, and performance targets. It recommends focusing on customer retention strategies and suggests implementing a new feedback system to improve product development.`;
-      
-      setCurrentSummary(summary);
+      setCurrentSummary(result.summary);
       
       // Add to history
       const newHistoryItem: SummaryItem = {
         id: Date.now().toString(),
         type: 'document',
         fileName: 'Text Summary',
-        summary: summary,
+        summary: result.summary,
         date: new Date().toLocaleString(),
         fileSize: `${textToSummarize.length} characters`
       };
@@ -82,7 +85,7 @@ export function AITools() {
       toast.success('Summary generated successfully');
     } catch (error) {
       console.error('Error generating summary:', error);
-      toast.error('Failed to generate summary');
+      toast.error(`Failed to generate summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsProcessing(false);
     }
@@ -97,19 +100,21 @@ export function AITools() {
       deploymentName: configValues.deploymentName
     });
     
-    toast.success('Configuration updated');
-    setShowConfig(false);
-    setIsConfigured(true);
+    // Check if the configuration is now valid
+    setIsConfigured(isConfigValid());
+    
+    if (isConfigValid()) {
+      toast.success('Configuration updated successfully');
+      setShowConfig(false);
+    } else {
+      toast.warning('Configuration saved but appears to be incomplete');
+    }
   };
 
   // Check if Azure OpenAI is configured
   useEffect(() => {
-    // Validate if the configuration has been set through the UI
-    const hasValidConfig = azureConfig.apiKey && 
-                          azureConfig.apiKey !== "" && 
-                          !azureConfig.endpoint.includes("your-endpoint");
-    
-    setIsConfigured(hasValidConfig);
+    // Use our validation helper
+    setIsConfigured(isConfigValid());
   }, []);
   
   // Handle file selection
@@ -141,6 +146,12 @@ export function AITools() {
       return;
     }
     
+    if (!isConfigured) {
+      toast.error('Azure OpenAI is not properly configured');
+      setShowConfig(true);
+      return;
+    }
+    
     setIsProcessing(true);
     
     try {
@@ -165,7 +176,7 @@ export function AITools() {
       toast.success('Summary generated successfully');
     } catch (error) {
       console.error('Error generating summary:', error);
-      toast.error('Failed to generate summary');
+      toast.error(`Failed to generate summary: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsProcessing(false);
     }

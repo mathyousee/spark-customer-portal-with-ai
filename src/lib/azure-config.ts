@@ -21,3 +21,15 @@ export function updateAzureConfig(config: {
   if (config.apiKey) azureConfig.apiKey = config.apiKey;
   if (config.deploymentName) azureConfig.deploymentName = config.deploymentName;
 }
+
+// Function to check if Azure OpenAI is properly configured
+export function isConfigValid(): boolean {
+  return (
+    !!azureConfig.apiKey && 
+    azureConfig.apiKey.length > 10 && 
+    !!azureConfig.endpoint && 
+    !azureConfig.endpoint.includes("your-endpoint") &&
+    !!azureConfig.deploymentName &&
+    azureConfig.deploymentName !== "your-deployment-name"
+  );
+}

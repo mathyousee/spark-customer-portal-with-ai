@@ -40,9 +40,10 @@
    - Success: Up-to-date customer information and appropriate communication settings
 
 5. **AI Document Summarization**
-   - What: Tool to upload documents or images and receive AI-powered summaries using Azure OpenAI
+   - What: Tool to upload documents or images and receive AI-powered summaries using Azure OpenAI integration
    - Why: Enables customers to quickly extract key information from complex documents
    - Success: Accurate summaries that save time and improve document comprehension
+   - Implementation: Direct API integration with Azure OpenAI service using customer-provided configuration
 
 ## Design Direction
 
@@ -115,10 +116,12 @@
 - **Edge Case Handling**: Pagination, filtering, and sorting for large data sets
 - **Technical Constraints**: Need to handle various states (loading, empty, error) gracefully
 
-## Implementation Considerations
-- **Scalability Needs**: System should handle growing user base and increasing data
-- **Testing Focus**: Navigation paths, data display, and responsive behavior
-- **Critical Questions**: How to handle authentication securely? How to manage session timeouts?
+## Technical Implementation
+- **Azure OpenAI Integration**: Direct API calls to Azure OpenAI service for document summarization with proper error handling
+- **Configuration Management**: User-configurable Azure OpenAI endpoint, API key, and deployment name
+- **File Processing**: Client-side text extraction for text files with appropriate handling for various document types
+- **Data Persistence**: Summary history saved between sessions using persistent state
+- **API Error Handling**: Robust error catching and user-friendly error messages for API failures
 
 ## Reflection
 - This approach is uniquely suited to business customers who need efficient access to their account information without unnecessary complexity.
