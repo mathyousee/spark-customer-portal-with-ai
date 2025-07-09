@@ -80,7 +80,7 @@ export function AITools() {
         fileSize: `${textToSummarize.length} characters`
       };
       
-      setSummaryHistory(prevHistory => [newHistoryItem, ...prevHistory]);
+      setSummaryHistory((prevHistory = []) => [newHistoryItem, ...prevHistory]);
       
       toast.success('Summary generated successfully');
     } catch (error) {
@@ -171,7 +171,7 @@ export function AITools() {
         fileSize: formatFileSize(file.size)
       };
       
-      setSummaryHistory(prevHistory => [newHistoryItem, ...prevHistory]);
+      setSummaryHistory((prevHistory = []) => [newHistoryItem, ...prevHistory]);
       
       toast.success('Summary generated successfully');
     } catch (error) {
@@ -200,7 +200,7 @@ export function AITools() {
   
   // Delete a history item
   const deleteHistoryItem = (id: string) => {
-    setSummaryHistory(prevHistory => prevHistory.filter(item => item.id !== id));
+    setSummaryHistory((prevHistory = []) => prevHistory.filter(item => item.id !== id));
     toast.success('Item removed from history');
   };
   
@@ -266,7 +266,7 @@ export function AITools() {
                     ref={fileInputRef}
                     onChange={handleFileChange}
                     className="hidden"
-                    accept=".pdf,.doc,.docx,.txt,image/*"
+                    accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,image/*"
                   />
                   
                   <Upload size={40} className="text-muted-foreground mb-2" />
@@ -279,7 +279,7 @@ export function AITools() {
                   ) : (
                     <div className="text-center">
                       <p className="font-medium text-foreground">Click to upload or drag and drop</p>
-                      <p className="text-sm text-muted-foreground">PDF, DOC, TXT, or image files</p>
+                      <p className="text-sm text-muted-foreground">PDF, DOC, TXT, CSV, Excel, or image files</p>
                     </div>
                   )}
                 </div>
@@ -387,9 +387,9 @@ export function AITools() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {summaryHistory.length > 0 ? (
+              {(summaryHistory || []).length > 0 ? (
                 <div className="space-y-4">
-                  {summaryHistory.map((item) => (
+                  {(summaryHistory || []).map((item) => (
                     <Card key={item.id} className="overflow-hidden">
                       <CardHeader className="bg-muted/30 py-3">
                         <div className="flex items-center justify-between">
@@ -462,8 +462,10 @@ export function AITools() {
             <div>
               <h4 className="font-medium mb-2">Supported File Types</h4>
               <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• PDF documents</li>
+                <li>• PDF documents (with text extraction)</li>
                 <li>• Word documents (.doc, .docx)</li>
+                <li>• Excel files (.xlsx, .xls)</li>
+                <li>• CSV files</li>
                 <li>• Text files (.txt)</li>
                 <li>• Images (.jpg, .png, .gif)</li>
               </ul>
@@ -472,9 +474,10 @@ export function AITools() {
               <h4 className="font-medium mb-2">Best Practices</h4>
               <ul className="text-sm space-y-1 text-muted-foreground">
                 <li>• Upload clear, high-quality documents</li>
-                <li>• Ensure text is legible in images</li>
+                <li>• Text is automatically extracted from PDFs and Word docs</li>
+                <li>• For spreadsheets, data from all sheets is included</li>
                 <li>• Keep files under 10MB for best performance</li>
-                <li>• For multi-page documents, ensure pages are in order</li>
+                <li>• Images require manual description for now</li>
               </ul>
             </div>
           </div>
@@ -525,7 +528,7 @@ export function AITools() {
               <Label htmlFor="azure-deployment">Deployment Name</Label>
               <Input
                 id="azure-deployment"
-                placeholder="gpt-35-turbo-instruct"
+                placeholder="gpt-35-turbo"
                 value={configValues.deploymentName}
                 onChange={(e) => setConfigValues({...configValues, deploymentName: e.target.value})}
               />

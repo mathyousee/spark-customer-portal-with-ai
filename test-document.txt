@@ -1,0 +1,27 @@
+Sample Document for Testing AI Summarization
+
+This is a test document to demonstrate the AI-powered document summarization feature. 
+
+Key Points:
+- The system can now extract actual text from uploaded documents
+- Supported formats include PDF, Word documents, Excel files, CSV files, and plain text
+- The extracted text is sent to Azure OpenAI for intelligent summarization
+- Real-time processing provides accurate summaries of document content
+
+Technical Implementation:
+The application uses specialized libraries for text extraction:
+- PDF.js for PDF documents
+- Mammoth.js for Word documents  
+- SheetJS (XLSX) for Excel and CSV files
+- FileReader API for plain text files
+
+This enhanced functionality provides users with genuine AI-powered insights into their document content, making it easier to quickly understand large amounts of text without reading the entire document.
+
+Benefits:
+1. Time-saving document analysis
+2. Key point extraction
+3. Intelligent content summarization
+4. Support for multiple file formats
+5. Real Azure OpenAI integration
+
+The system is now ready for production use with proper Azure OpenAI configuration.

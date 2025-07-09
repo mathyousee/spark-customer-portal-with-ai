@@ -7,8 +7,8 @@ export const azureConfig = {
   // Default values - these should be configured through the UI in this client-side app
   endpoint: "your-endpoint.openai.azure.com",
   apiKey: "", // Never hardcode actual API keys
-  deploymentName: "your-deployment-name",
-  apiVersion: "2023-05-15"
+  deploymentName: "gpt-35-turbo", // Common deployment name for GPT-3.5 Turbo
+  apiVersion: "2024-02-15-preview" // Updated to a more recent API version
 };
 
 // Function to update the config

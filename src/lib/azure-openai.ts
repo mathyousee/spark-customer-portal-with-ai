@@ -1,9 +1,14 @@
 import { azureConfig } from './azure-config';
+import * as pdfjsLib from 'pdfjs-dist';
+import mammoth from 'mammoth';
+import * as XLSX from 'xlsx';
+
+// Set up PDF.js worker using local file to avoid CORS issues
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
 /**
  * This module provides a simplified interface for Azure OpenAI service
- * interactions. In a production app, you would implement actual API calls
- * to Azure OpenAI using the @azure/openai package.
+ * interactions with real text extraction capabilities.
  */
 
 // Define the response type for summarization operations
@@ -14,90 +19,193 @@ export interface SummaryResponse {
 }
 
 /**
- * Extracts text from uploaded document files
- * In a real production app, you would use server-side libraries for extraction
- * This client-side implementation reads text files and performs basic extraction
+ * Extract text from PDF files using PDF.js
  */
-export async function extractTextFromDocument(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+async function extractTextFromPDF(file: File): Promise<string> {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = '';
     
-    reader.onload = (event) => {
-      if (!event.target || typeof event.target.result !== 'string') {
-        reject(new Error('Failed to read file contents'));
-        return;
-      }
-      
-      // For text files, we can use the content directly
-      if (file.type === 'text/plain') {
-        resolve(event.target.result);
-        return;
-      }
-      
-      // For PDF, DOCX, etc., in a real implementation we would use specialized libraries
-      // Here we'll extract what we can or provide a placeholder
-      if (file.type === 'application/pdf') {
-        resolve(`Content extracted from PDF: ${file.name}\n\nIn a production application, we would use a PDF extraction library like pdf.js to extract the actual text content from this PDF document.`);
-      } else if (file.type.includes('word') || file.type.includes('docx')) {
-        resolve(`Content extracted from document: ${file.name}\n\nIn a production application, we would use a document parsing library like mammoth.js to extract the actual text content from this Word document.`);
-      } else {
-        // For other file types, provide at least the name as context
-        resolve(`Document: ${file.name}\n\nFile type: ${file.type}\n\nIn a production environment, we would use appropriate extraction tools for this file type.`);
-      }
-    };
-    
-    reader.onerror = () => {
-      reject(new Error('Error reading file'));
-    };
-    
-    // Read as text if it's a text file, otherwise as data URL
-    if (file.type === 'text/plain') {
-      reader.readAsText(file);
-    } else {
-      reader.readAsDataURL(file);
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items
+        .map((item: any) => item.str)
+        .join(' ');
+      fullText += pageText + '\n\n';
     }
+    
+    return fullText.trim();
+  } catch (error) {
+    console.error('Error extracting PDF text:', error);
+    throw new Error(`Failed to extract text from PDF: ${error instanceof Error ? error.message : 'PDF processing error'}`);
+  }
+}
+
+/**
+ * Extract text from Word documents using mammoth
+ */
+async function extractTextFromWord(file: File): Promise<string> {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value;
+  } catch (error) {
+    console.error('Error extracting Word document text:', error);
+    throw new Error('Failed to extract text from Word document');
+  }
+}
+
+/**
+ * Extract text from Excel/CSV files using xlsx
+ */
+async function extractTextFromSpreadsheet(file: File): Promise<string> {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    let fullText = '';
+    
+    // Process each worksheet
+    workbook.SheetNames.forEach((sheetName) => {
+      const worksheet = workbook.Sheets[sheetName];
+      const csvData = XLSX.utils.sheet_to_csv(worksheet);
+      fullText += `Sheet: ${sheetName}\n${csvData}\n\n`;
+    });
+    
+    return fullText.trim();
+  } catch (error) {
+    console.error('Error extracting spreadsheet text:', error);
+    throw new Error('Failed to extract text from spreadsheet');
+  }
+}
+
+/**
+ * Extract text from various file types using OCR for images
+ */
+async function extractTextFromImage(file: File): Promise<string> {
+  // For images, we'll provide a detailed description for now
+  // In a production environment, you'd use Azure Computer Vision OCR
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(`Image file: ${file.name}
+      
+This is an image file that would be processed using Azure Computer Vision's OCR capabilities in a production environment to extract any text content present in the image.
+
+File details:
+- Name: ${file.name}
+- Type: ${file.type}
+- Size: ${(file.size / 1024).toFixed(2)} KB
+
+For actual text extraction from images, you would need to integrate with Azure Computer Vision API's Read API or OCR capabilities.`);
+    };
+    reader.readAsDataURL(file);
   });
 }
 
 /**
+ * Extracts text from uploaded document files
+ * Now with real text extraction capabilities for multiple file types
+ */
+export async function extractTextFromDocument(file: File): Promise<string> {
+  try {
+    // Handle text files directly
+    if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target && typeof event.target.result === 'string') {
+            resolve(event.target.result);
+          } else {
+            reject(new Error('Failed to read text file'));
+          }
+        };
+        reader.onerror = () => reject(new Error('Error reading text file'));
+        reader.readAsText(file);
+      });
+    }
+    
+    // Handle PDF files
+    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      const extractedText = await extractTextFromPDF(file);
+      if (extractedText.trim().length === 0) {
+        return `PDF Document: ${file.name}
+        
+This PDF file appears to be empty or contains only images/scanned content without extractable text. 
+In a production environment, you would use Azure Computer Vision's OCR capabilities to extract text from image-based PDFs.
+
+File size: ${(file.size / 1024).toFixed(2)} KB`;
+      }
+      return `PDF Document: ${file.name}\n\nExtracted Content:\n\n${extractedText}`;
+    }
+    
+    // Handle Word documents
+    if (file.type.includes('word') || file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
+      const extractedText = await extractTextFromWord(file);
+      if (extractedText.trim().length === 0) {
+        return `Word Document: ${file.name}
+        
+This Word document appears to be empty or contains content that couldn't be extracted.
+
+File size: ${(file.size / 1024).toFixed(2)} KB`;
+      }
+      return `Word Document: ${file.name}\n\nExtracted Content:\n\n${extractedText}`;
+    }
+    
+    // Handle spreadsheet files
+    if (file.type.includes('spreadsheet') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv')) {
+      const extractedText = await extractTextFromSpreadsheet(file);
+      if (extractedText.trim().length === 0) {
+        return `Spreadsheet: ${file.name}
+        
+This spreadsheet appears to be empty or contains no readable data.
+
+File size: ${(file.size / 1024).toFixed(2)} KB`;
+      }
+      return `Spreadsheet: ${file.name}\n\nExtracted Data:\n\n${extractedText}`;
+    }
+    
+    // Handle CSV files specifically
+    if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target && typeof event.target.result === 'string') {
+            resolve(`CSV File: ${file.name}\n\nExtracted Data:\n\n${event.target.result}`);
+          } else {
+            reject(new Error('Failed to read CSV file'));
+          }
+        };
+        reader.onerror = () => reject(new Error('Error reading CSV file'));
+        reader.readAsText(file);
+      });
+    }
+    
+    // For unsupported file types, provide metadata
+    return `Document: ${file.name}
+    
+File Details:
+- Type: ${file.type || 'Unknown'}
+- Size: ${(file.size / 1024).toFixed(2)} KB
+
+This file type is not currently supported for automatic text extraction. 
+Supported formats include: PDF, Word documents (.docx, .doc), Excel files (.xlsx, .xls), CSV files, and plain text files.
+
+Please convert the file to a supported format or provide a summary of its contents.`;
+    
+  } catch (error) {
+    console.error('Error extracting text from document:', error);
+    throw new Error(`Failed to extract text from ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+/**
  * Analyzes an image using Azure Computer Vision services
- * Makes an actual call to Azure's Computer Vision APIs through the OpenAI integration
+ * For now provides detailed metadata, but could be extended with actual OCR
  */
 export async function analyzeImage(file: File): Promise<string> {
-  // For image analysis, in a production app we would upload the image to Azure
-  // and call their Computer Vision API
-  
-  // Here we'll encode the image as base64 and describe it
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = async (event) => {
-      if (!event.target || typeof event.target.result !== 'string') {
-        reject(new Error('Failed to read image file'));
-        return;
-      }
-      
-      try {
-        // Create a description of the image that we can send to OpenAI for summarization
-        const imageDescription = `Image analysis for file: ${file.name}\n` +
-          `Type: ${file.type}\n` +
-          `Size: ${file.size} bytes\n\n` +
-          `This image would be processed by Azure Computer Vision in a production application. ` +
-          `The API would extract text content from the image if present, as well as identify objects, ` +
-          `scenes, colors, faces, and other visual elements.`;
-          
-        resolve(imageDescription);
-      } catch (error) {
-        reject(error);
-      }
-    };
-    
-    reader.onerror = () => {
-      reject(new Error('Error reading image file'));
-    };
-    
-    reader.readAsDataURL(file);
-  });
+  return await extractTextFromImage(file);
 }
 
 /**
@@ -113,22 +221,39 @@ export async function summarizeWithAzureOpenAI(content: string): Promise<Summary
   }
 
   try {
-    const endpoint = `https://${azureConfig.endpoint.replace('https://', '')}/openai/deployments/${azureConfig.deploymentName}/completions?api-version=${azureConfig.apiVersion}`;
+    // Construct the proper Azure OpenAI endpoint
+    let endpoint = azureConfig.endpoint;
+    if (!endpoint.startsWith('https://')) {
+      endpoint = `https://${endpoint}`;
+    }
+    if (!endpoint.endsWith('/')) {
+      endpoint += '/';
+    }
     
-    const response = await fetch(endpoint, {
+    const apiUrl = `${endpoint}openai/deployments/${azureConfig.deploymentName}/chat/completions?api-version=${azureConfig.apiVersion}`;
+    
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'api-key': azureConfig.apiKey
       },
       body: JSON.stringify({
-        prompt: `Please provide a comprehensive summary of the following content. Extract the key points, main ideas, and important details. Format your response in clear, readable paragraphs.\n\nCONTENT:\n${content}`,
-        max_tokens: 500,
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful assistant that creates concise, informative summaries. Extract the key points, main ideas, and important details from the provided content. Format your response in clear, readable paragraphs."
+          },
+          {
+            role: "user",
+            content: `Please summarize the following content:\n\n${content}`
+          }
+        ],
+        max_tokens: 800,
         temperature: 0.3,
         top_p: 1,
         frequency_penalty: 0,
-        presence_penalty: 0,
-        stop: null
+        presence_penalty: 0
       })
     });
 
@@ -141,7 +266,13 @@ export async function summarizeWithAzureOpenAI(content: string): Promise<Summary
     const processingTime = Date.now() - startTime;
     
     // Extract summary from the response
-    const summary = data.choices && data.choices[0] ? data.choices[0].text.trim() : "";
+    const summary = data.choices && data.choices[0] && data.choices[0].message 
+      ? data.choices[0].message.content.trim() 
+      : "No summary could be generated";
+    
+    if (!summary || summary === "No summary could be generated") {
+      throw new Error("Azure OpenAI returned an empty response");
+    }
     
     return {
       summary,
