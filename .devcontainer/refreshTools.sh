@@ -4,7 +4,8 @@ set -e
 
 echo "Checking for updates to workbench-template from GitHub"
 
-WORKSPACE_DIR="/workspaces/spark-template"
+# Use the actual workspace directory
+WORKSPACE_DIR="/workspaces/spark-customer-portal-with-ai"
 
 MARKER_DIR="/var/lib/spark/.versions"
 RELEASE_MARKER_FILE="$MARKER_DIR/release"
@@ -58,7 +59,7 @@ else
     sudo rmdir ./package
 
     cd $WORKSPACE_DIR
-    npm i -f
+    npm i -f || echo "Warning: npm install failed, continuing..."
     cd - >/dev/null
 
     sudo cp ./spark-sdk-dist/spark-tools-version "$TOOLS_MARKER_FILE"

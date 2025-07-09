@@ -21,11 +21,13 @@ azcopy_dir=$(find /usr/local/bin/ -type d -name "azcopy*" | head -n 1)
 sudo mv "$azcopy_dir/azcopy" /usr/local/bin/azcopy
 sudo rm -rf "$azcopy_dir"
 
+echo "Installing supervisor"
+sudo apt-get update && sudo apt-get install -y supervisor
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 "$SCRIPT_DIR/refreshTools.sh"
 
 echo "Pre-starting the server and generating the optimized assets"
-npm run optimize --override
-
-echo "Installing supervisor"
-sudo apt-get update && sudo apt-get install -y supervisor
+# Make sure we're in the right directory and dependencies are installed
+cd /workspaces/spark-customer-portal-with-ai
+npm run optimize --override || echo "Optimize failed, continuing..."

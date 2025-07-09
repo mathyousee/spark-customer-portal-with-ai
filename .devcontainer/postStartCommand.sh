@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Check if SNAPSHOT_SAS_URL was passed, if so run hydrate.sh
 if [ -n "$SNAPSHOT_SAS_URL" ]; then
-    WORKSPACE_DIR="/workspaces/spark-template"
+    WORKSPACE_DIR="/workspaces/spark-customer-portal-with-ai"
     SAS_URI="$SNAPSHOT_SAS_URL" /usr/local/bin/hydrate.sh $WORKSPACE_DIR
 fi
 
@@ -13,14 +13,20 @@ fi
 git config gc.reflogExpire 500.years.ago
 git config gc.reflogExpireUnreachable 500.years.ago
 
-sudo cp .devcontainer/spark.conf /etc/supervisor/conf.d/
+# Create a workspace-specific supervisor config
+sed 's|/workspaces/spark-template|/workspaces/spark-customer-portal-with-ai|g' .devcontainer/spark.conf > /tmp/spark.conf
+sudo cp /tmp/spark.conf /etc/supervisor/conf.d/
 
-sudo chown node /var/run/
-sudo chown -R node /var/log/
+# Set up permissions more safely
+sudo mkdir -p /var/run /var/log
+sudo chown node /var/run/ || echo "Warning: Could not change ownership of /var/run/"
+sudo chown -R node /var/log/ || echo "Warning: Could not change ownership of /var/log/"
 
 supervisord
 supervisorctl reread
 supervisorctl update
 
 # Run the build script to perform a one-time build for static preview
-/usr/local/bin/static-preview-build.sh
+if [ -f "/usr/local/bin/static-preview-build.sh" ]; then
+    /usr/local/bin/static-preview-build.sh
+fi
